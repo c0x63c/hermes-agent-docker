@@ -1,0 +1,20 @@
+:80, :443 {
+	reverse_proxy hermes:8642
+	log {
+		output file /var/log/caddy/gateway.access.log {
+			roll_size 100mb
+			roll_keep 5
+			roll_keep_for 720h
+		}
+	}
+}
+:9119 {
+	reverse_proxy hermes:9119
+	#log {
+	#	output file /var/log/caddy/dashboard.access.log {
+	#		roll_size 100mb
+	#		roll_keep 5
+	#		roll_keep_for 720h
+	#	}
+	#}
+}

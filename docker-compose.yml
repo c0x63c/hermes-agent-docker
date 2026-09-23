@@ -1,0 +1,89 @@
+services:
+  hermes:
+    image: nousresearch/hermes-agent:v2026.9.14
+    container_name: hermes
+    restart: unless-stopped
+    command: ["gateway", "run"]
+    environment:
+      TZ: "ASIA/TOKYO"
+      HERMES_HOME: /opt/data
+      HERMES_UID: ${HERMES_UID:-1000}
+      HERMES_GID: ${HERMES_GID:-1000}
+      HERMES_API_KEY: ${HERMES_API_KEY}
+      HERMES_WRITE_SAFE_ROOT: /opt/data
+      HERMES_DB_URL: postgres://hermes:${PG_PASSWORD}@postgres:5432/hermes
+      LM_API_KEY: ${LM_API_KEY}
+      HERMES_DASHBOARD: '1'
+      HERMES_DASHBOARD_HOST: 0.0.0.0
+      HERMES_DASHBOARD_PORT: '9119'
+      # OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # OPENAI_MODEL: ${OPENAI_MODEL}
+      # ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    volumes:
+      - ./volumes/hermes/data:/opt/data
+      - ./volumes/hermes/logs:/var/log/hermes
+    env_file:
+      - .env
+    networks:
+      - hermes_internal
+    # cap_drop:
+    #   - ALL
+    # cap_add:
+    #   - CHOWN
+    #   - SETUID
+    #   - SETGID
+    #   - FOWNER 
+    #   - FSETID
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://localhost:8642/health && curl -fsS http://localhost:9119/api/status || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16.15-alpine
+    container_name: hermes-postgres
+    restart: unless-stopped
+    user: "${HERMES_UID:-1000}:${HERMES_GID:-1000}"
+    environment:
+      TZ: "ASIA/TOKYO"
+      POSTGRES_USER: hermes
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: hermes
+    volumes:
+      - ./volumes/postgres/data:/var/lib/postgresql/data
+    networks:
+      - hermes_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hermes"]
+      interval: 10s
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: hermes-caddy
+    restart: unless-stopped
+    user: "${HERMES_UID:-1000}:${HERMES_GID:-1000}"
+    environment:
+      TZ: "ASIA/TOKYO"
+    ports:
+      - "443:443"
+      - "80:80"
+      - "9119:9119"
+    volumes:
+      - ./volumes/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./volumes/caddy/data:/data
+      - ./volumes/caddy/logs:/var/log/caddy
+    networks:
+      - hermes_internal
+    depends_on:
+      - hermes
+
+networks:
+  hermes_internal:
+    driver: bridge
