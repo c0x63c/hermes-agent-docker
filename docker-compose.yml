@@ -1,6 +1,6 @@
 services:
   hermes:
-    image: nousresearch/hermes-agent:v2026.9.14
+    image: nousresearch/hermes-agent:v2026.9.24
     container_name: hermes
     restart: unless-stopped
     command: ["gateway", "run"]
@@ -18,11 +18,11 @@ services:
       HERMES_DASHBOARD_BASIC_AUTH_USERNAME: ${DASHBOARD_USERNAME:-}
       HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: ${DASHBOARD_PASSWORD:-}
       HERMES_DASHBOARD_BASIC_AUTH_SECRET: $(openssl rand -base64 32)
-      LM_API_KEY: ${LM_API_KEY:-}
-      LM_BASE_URL: ${LM_BASE_URL:-}
-      # OPENAI_API_KEY: ${OPENAI_API_KEY}
-      # OPENAI_MODEL: ${OPENAI_MODEL}
-      # ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      #LM_API_KEY: ${LM_API_KEY:-}
+      #LM_BASE_URL: ${LM_BASE_URL:-}
+      #OPENAI_API_KEY: ${OPENAI_API_KEY}
+      #OPENAI_MODEL: ${OPENAI_MODEL}
+      #ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
     volumes:
       - ./volumes/hermes/data:/opt/data
       - ./volumes/hermes/logs:/var/log/hermes
